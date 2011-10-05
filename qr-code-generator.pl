@@ -56,7 +56,7 @@ my $qrcode = Imager::QRCode->new(
 	'size'			=> 1,
 	'margin'		=> $margin,
 	'version'		=> $version,
-	'level'			=> 'H',
+	'level'			=> $level,
 	'casesensitive'	=> 1,
 	'lightcolor'	=> $white,
 	'darkcolor'		=> $black,
@@ -67,24 +67,31 @@ my $width = $img->getwidth;
 my $height = $img->getheight;
 
 my $svg = SVG->new('width' => $width * $scale, 'height' => $height * $scale);
+my $d;
 
 for (my $y = 0; $y < $height; $y++) {
+	my $ys = ($y + 0.5) * $scale;
+	$d .= "M 0 $ys ";
+
 	for (my $x = 0; $x < $width; $x++) {
-		my $color = $img->getpixel('x' => $x,
-								   'y' => $y);
+		my $xs = ($x + 1) * $scale;
+		my $color = $img->getpixel('x' => $x, 'y' => $y);
+
 		if ($color->equals('other' => $black)) {
-			$svg->rectangle('x' => $x * $scale,
-							'y' => $y * $scale,
-							'width'  => $scale,
-							'height' => $scale,
-							'style' => {
-								'fill' => 'rgb(0,0,0)',
-								'fill-opacity' => '1',
-								'stroke' => 'none',
-							});
+			$d .= "H $xs ";
+		} else {
+			$d .= "M $xs $ys ";
 		}
 	}
 }
+
+$svg->path('d' => $d,
+		   'style' => {
+			   'fill' => 'none',
+			   'stroke' => 'rgb(0,0,0)',
+			   'stroke-width' => $scale,
+			   'stroke-linecap' => 'butt',
+		   });
 
 print $svg->xmlify;
 
